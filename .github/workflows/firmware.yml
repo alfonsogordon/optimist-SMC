@@ -35,13 +35,13 @@ jobs:
       - name: Setup upstream build environment
         working-directory: optimist
         run: python tools/optimist.py setup --yes --no-emu
-      - name: Build upstream baseline profile (not SMC integrated)
+      - name: Apply guarded SMC MIDI probe\n        run: python smc-work/tools/apply_smc.py optimist\n      - name: Build upstream baseline profile (not SMC integrated)
         working-directory: optimist
         run: python tools/optimist.py package --profile mots-config --out dist --summary dist/summary.json
       - name: Save baseline artifact for inspection (NOT SMC firmware)
         uses: actions/upload-artifact@v4
         with:
-          name: upstream-optimist-baseline-not-smc
+          name: optimist-with-smc-probe-not-control-enabled
           path: optimist/dist/
           if-no-files-found: error
           retention-days: 7

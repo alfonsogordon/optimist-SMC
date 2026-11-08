@@ -47,7 +47,7 @@ jobs:
       - name: Verify package and simulate installer paths
         working-directory: optimist
         run: |
-          python -m unittest discover -s tests -p 'anyflash_test.py' -v
+          python tests/anyflash_test.py
           node --test web/test_web.mjs
       - name: Generate local package SHA-256 manifest
         working-directory: optimist

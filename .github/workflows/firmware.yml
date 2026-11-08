@@ -1,0 +1,47 @@
+name: Optimist FM1 baseline firmware build
+on:
+  push:
+    branches: [dev/smc-integration]
+    paths:
+      - '.github/workflows/firmware.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: smc-work
+      - uses: actions/checkout@v4
+        with:
+          repository: w0ts/optimist
+          ref: main
+          path: optimist
+          submodules: false
+      - name: Fetch pinned public FM1 base and BSP
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C optimist config -f .gitmodules submodule.fm1base.url https://github.com/w0ts/fm1-base.git
+          git -C optimist submodule sync --recursive
+          git -C optimist submodule update --init --recursive fm1base
+          git -C optimist submodule update --init --recursive third_party/m-flasher third_party/m-bootloader
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Setup upstream build environment
+        working-directory: optimist
+        run: python tools/optimist.py setup --yes --no-emu
+      - name: Build upstream baseline profile (not SMC integrated)
+        working-directory: optimist
+        run: python tools/optimist.py package --profile mots-config --out dist --summary dist/summary.json
+      - name: Save baseline artifact for inspection (NOT SMC firmware)
+        uses: actions/upload-artifact@v4
+        with:
+          name: upstream-optimist-baseline-not-smc
+          path: optimist/dist/
+          if-no-files-found: error
+          retention-days: 7

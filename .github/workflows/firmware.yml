@@ -44,6 +44,26 @@ jobs:
         run: |
           set -o pipefail
           python tools/optimist.py package --profile mots-config --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
+      - name: Verify package and simulate installer paths
+        working-directory: optimist
+        run: |
+          python -m unittest discover -s tests -p 'anyflash_test.py' -v
+          node --test web/test_web.mjs
+      - name: Generate local package SHA-256 manifest
+        working-directory: optimist
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib
+          out = pathlib.Path("dist")
+          files = sorted(out.glob("*.fwsc"))
+          if len(files) != 1:
+              raise SystemExit(f"Expected one FWSC package, found {len(files)}")
+          manifest = {"status":"BLE CENTRAL CONNECTION TEST ONLY - NOT HARDWARE VALIDATED",
+                      "packages":[{"filename":p.name,"size":p.stat().st_size,
+                                   "sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in files]}
+          (out/"smc-test-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
+          print(json.dumps(manifest,indent=2))
+          PY
       - name: Save build log even on failure
         if: always()
         uses: actions/upload-artifact@v4

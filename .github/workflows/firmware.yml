@@ -4,6 +4,8 @@ on:
     branches: [dev/smc-integration]
     paths:
       - '.github/workflows/firmware.yml'
+      - 'tools/apply_smc.py'
+      - 'smc/**'
   workflow_dispatch:
 permissions:
   contents: read

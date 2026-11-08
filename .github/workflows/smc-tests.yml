@@ -1,0 +1,15 @@
+name: SMC MIDI host tests
+on:
+  push:
+    branches: [dev/smc-integration]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  midi:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test classifier
+        run: |
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -fno-omit-frame-pointer tests/smc_midi_test.c -o /tmp/smc-midi-test
+          /tmp/smc-midi-test

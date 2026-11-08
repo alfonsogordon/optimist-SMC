@@ -41,8 +41,17 @@ jobs:
         run: python smc-work/tools/apply_smc.py optimist 
       - name: Build with BLE central scan and connect enabled
         working-directory: optimist
-        run: |\n          set -o pipefail\n          python tools/optimist.py package --profile mots-config --set BLE_CENTRAL=1 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
-      - name: Save build log even on failure\n        if: always()\n        uses: actions/upload-artifact@v4\n        with:\n          name: fm1-build-diagnostics\n          path: firmware-build.log\n          retention-days: 7\n      - name: Save BLE central test artifact (NOT SMC control firmware)
+        run: |
+          set -o pipefail
+          python tools/optimist.py package --profile mots-config --set BLE_CENTRAL=1 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
+      - name: Save build log even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fm1-build-diagnostics
+          path: firmware-build.log
+          retention-days: 7
+      - name: Save BLE central test artifact (NOT SMC control firmware)
         uses: actions/upload-artifact@v4
         with:
           name: fm1-ble-central-test-not-smc-control

@@ -5,10 +5,14 @@ int main(void) {
  e=smc_decode(0x90,0x08,127); assert(e.kind==SMC_BUTTON && e.index==8 && e.value==1);
  e=smc_decode(0x80,0x08,127); assert(e.kind==SMC_BUTTON && e.value==0);
  e=smc_decode(0x90,0x5e,0); assert(e.kind==SMC_BUTTON && e.value==0);
- e=smc_decode(0xb0,0x10,64); assert(e.kind==SMC_KNOB && e.index==0 && e.value==64);
+ e=smc_decode(0x90,0x30,127); assert(e.kind==SMC_BUTTON);
+ e=smc_decode(0xb0,0x10,3); assert(e.kind==SMC_KNOB && e.index==0 && e.delta==3);
+ e=smc_decode(0xb0,0x10,0x43); assert(e.kind==SMC_KNOB && e.delta==-3);
  e=smc_decode(0xe7,127,127); assert(e.kind==SMC_FADER && e.index==7 && e.wide==16383 && e.value==127);
  e=smc_decode(0xe0,0,0); assert(e.kind==SMC_FADER && e.value==0);
+ e=smc_decode(0xe8,0,64); assert(e.kind==SMC_OTHER);
  e=smc_decode(0x91,0x08,127); assert(e.kind==SMC_OTHER);
+ e=smc_decode(0xb1,0x10,64); assert(e.kind==SMC_OTHER);
  e=smc_decode(0xb0,0x10,255); assert(e.kind==SMC_OTHER);
  return 0;
 }

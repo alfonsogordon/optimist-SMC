@@ -1,0 +1,25 @@
+name: Release safety gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [dev/smc-integration]
+    paths:
+      - 'web-flasher/**'
+      - '.github/workflows/release-gate.yml'
+permissions:
+  contents: read
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require no unverified SMC release
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f web-flasher/README.md
+          if find web-flasher -type f \( -name '*.fwsc' -o -name '*.bin' -o -name '*.boot' \) | grep -q .; then
+            echo 'Do not commit unverified flashable images to web-flasher/' >&2
+            exit 1
+          fi
+          echo 'Safety documentation present; no unverified firmware in web-flasher.'

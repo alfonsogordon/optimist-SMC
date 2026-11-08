@@ -13,3 +13,5 @@ jobs:
         run: |
           cc -std=c11 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -fno-omit-frame-pointer tests/smc_midi_test.c -o /tmp/smc-midi-test
           /tmp/smc-midi-test
+          cc -std=c11 -Wall -Wextra -Werror -pedantic -fsanitize=address,undefined -fno-omit-frame-pointer tests/smc_route_test.c -o /tmp/smc-route-test
+          /tmp/smc-route-test

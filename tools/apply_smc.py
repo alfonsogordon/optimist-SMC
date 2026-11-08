@@ -49,6 +49,7 @@ if q.count(call) != 1:
     raise SystemExit("upstream MIDI queue consumer changed; refusing patch")
 route_header = root / "firmware/src/seq/smc_route.h"
 route_header.write_bytes((Path(__file__).resolve().parent.parent / "smc/smc_route.h").read_bytes())
+(root / "firmware/src/seq/smc_midi.h").write_bytes((Path(__file__).resolve().parent.parent / "smc/smc_midi.h").read_bytes())
 # The SMC-Mixer must be positively identified by the BLE connection layer.
 # Until that exists, SMC_LINK_IDENTIFIED is 0 and routing cannot activate.
 route = """#include "smc_route.h"
@@ -73,7 +74,7 @@ q = route + q if False else q
 marker = "static void events_block_(uint32_t n);"
 if q.count(marker) != 1:
     raise SystemExit("upstream events_block declaration changed; refusing patch")
-q = q.replace(marker, route + "\\n" + marker)
+q = q.replace(marker, route + "\n" + marker)
 q = q.replace(call, """if (!smc_command_try(midi_in_src[mi_r == 0 ? MQ - 1 : (mi_r - 1) % MQ],
                              st, ch, d1, d2))
             FAST_CALL(seqev, midi_event)(st, ch, d1, d2);""")

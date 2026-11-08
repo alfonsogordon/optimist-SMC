@@ -41,5 +41,42 @@ replacement = anchor + """
 s = s.replace(anchor, replacement)
 s = s.replace(anchor, anchor, 0)
 s = s.replace("/* the occasional controller / panic: out of the render path's inlining */", probe + "\n/* the occasional controller / panic: out of the render path's inlining */")
+# Patch the source-aware MIDI consumer only after verifying the exact upstream callsite.
+seq = root / "firmware/src/seq/seq.c"
+q = seq.read_text()
+call = "FAST_CALL(seqev, midi_event)(st, ch, d1, d2);"
+if q.count(call) != 1:
+    raise SystemExit("upstream MIDI queue consumer changed; refusing patch")
+route_header = root / "firmware/src/seq/smc_route.h"
+route_header.write_bytes((Path(__file__).resolve().parent.parent / "smc/smc_route.h").read_bytes())
+# The SMC-Mixer must be positively identified by the BLE connection layer.
+# Until that exists, SMC_LINK_IDENTIFIED is 0 and routing cannot activate.
+route = """#include "smc_route.h"
+#ifndef SMC_LINK_IDENTIFIED
+#define SMC_LINK_IDENTIFIED 0
+#endif
+static int smc_command_try(uint32_t source, uint32_t st, uint32_t ch, uint32_t d1, uint32_t d2)
+{
+    struct smc_command c = smc_route(1, SMC_LINK_IDENTIFIED && source == 3u,
+                                      (uint8_t)(st | ch), (uint8_t)d1, (uint8_t)d2);
+    if (c.action == SMC_ACT_PLAY) {
+        if (!song.playing) transport_req = 1;
+    } else if (c.action == SMC_ACT_STOP) {
+        if (song.playing) transport_req = 2;
+    } else return 0;
+    return 1;
+}
+"""
+q = route + q if False else q
+# Include after the upstream module's own initial declarations, before events_block.
+# The insertion immediately before events_block is after transport_req declaration.
+marker = "static void events_block_(uint32_t n);"
+if q.count(marker) != 1:
+    raise SystemExit("upstream events_block declaration changed; refusing patch")
+q = q.replace(marker, route + "\\n" + marker)
+q = q.replace(call, """if (!smc_command_try(midi_in_src[mi_r == 0 ? MQ - 1 : (mi_r - 1) % MQ],
+                             st, ch, d1, d2))
+            FAST_CALL(seqev, midi_event)(st, ch, d1, d2);""")
+seq.write_text(q)
 src.write_text(s)
 print("Patched Optimist MIDI event entrypoint with non-invasive SMC probe")

@@ -57,7 +57,7 @@ jobs:
         working-directory: optimist
         run: |
           set -o pipefail
-          OPTIMIST_CLASSIC=1 python tools/optimist.py package --profile mots-config --set LAYOUT=8 --set WIFI_LINK=0 --set USB_HOST=0 --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --set ENG_CS80=0 --set ENG_PROPHET=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
+          OPTIMIST_CLASSIC=1 python tools/optimist.py package --profile mots-config --set LAYOUT=0 --set WIFI_LINK=0 --set USB_HOST=0 --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --set ENG_CS80=0 --set ENG_PROPHET=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
       - name: Reject packages the running FM1 cannot browser-flash
         working-directory: optimist
         run: |
@@ -75,8 +75,8 @@ jobs:
           pkg=package_kind(raw,size)
           allowed,why=loader_takes("optimist",pkg,"FM-1_722")
           print("Package",p.name,"flash size",hex(size),"identity",pkg.product,"type",pkg.kind,"allowed",allowed,why)
-          if size not in OWN_SLOTS or not allowed or pkg.kind!="optimist":
-              raise SystemExit("BLOCKED: this firmware requires download mode; not safe for the web flasher")
+          if size != 0x93000 or not allowed or pkg.kind!="optimist":
+              raise SystemExit("BLOCKED: package is not Skiff-compatible 0x93000; never publish to web flasher")
           PY
       - name: Verify package and simulate installer paths
         working-directory: optimist

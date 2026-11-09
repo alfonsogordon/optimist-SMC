@@ -106,6 +106,26 @@ jobs:
           cat > web/smc-test-flavour.json <<'JSON'
           {"flavours":[{"id":"smc-ble-test","title":"SMC-Mixer Bluetooth connection test","description":"Experimental BLE discovery/connection only. No SMC fader or transport control. Three optional sound engines disabled. Back up Skiff first.","profile":"mots-config","file":"dist/*.fwsc"}]}
           JSON
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("web/installer/installer.js")
+          src=p.read_text()
+          changes={
+            'el.bootOpt.hidden = st.bootWord === "mboot";':'el.bootOpt.hidden = true; /* SMC test: no bootloader replacement UI */',
+            'const boot = bootloaderChoice(pkg.bootloader, el.boot.checked).choice;':'const boot = "keep"; /* SMC test: always preserve the existing bootloader */',
+            'const keep = route.wantsMboot ? h("button.o-btn.sm.oi-keepboot", { type: "button", onclick: () => { el.boot.checked = false; render(); install(); } }, TEXT.keepBoot) : null;':'const keep = null; /* SMC test: never offer m-bootloader */',
+          }
+          for old,new in changes.items():
+              if src.count(old)!=1: raise SystemExit("Installer changed: cannot safely lock bootloader: "+old)
+              src=src.replace(old,new)
+          # Remove the option's DOM as well, rather than merely hiding it.
+          src=src.replace('el.bootRow = h("div.oi-bootrow", {}, el.bootLine, el.bootOpt);',
+                          'el.bootRow = h("div.oi-bootrow", {}, el.bootLine);')
+          if 'el.bootRow = h("div.oi-bootrow", {}, el.bootLine);' not in src:
+              raise SystemExit("Could not remove bootloader checkbox")
+          p.write_text(src)
+          print("SMC installer: bootloader hard-locked to keep, checkbox removed")
+          PY
           python web/make_site.py --flavours web/smc-test-flavour.json 0.1 ../smc-flasher-site
           python - <<'PY'
           import json

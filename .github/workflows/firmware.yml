@@ -45,7 +45,7 @@ jobs:
         working-directory: optimist
         run: |
           set -o pipefail
-          python tools/optimist.py package --profile mots-config --set LAYOUT=8 --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --set ENG_CS80=0 --set ENG_PROPHET=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
+          python tools/optimist.py package --release 0.2 --profile mots-config --set LAYOUT=8 --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --set ENG_CS80=0 --set ENG_PROPHET=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
       - name: Reject packages the running FM1 cannot browser-flash
         working-directory: optimist
         run: |
@@ -62,7 +62,7 @@ jobs:
           size=flash_size(logical_image(raw))
           pkg=package_kind(raw,size)
           allowed,why=loader_takes("optimist",pkg,"FM-1_722")
-          print("Package",p.name,"flash size",hex(size),"type",pkg.kind,"allowed",allowed,why)
+          print("Package",p.name,"flash size",hex(size),"identity",pkg.product,"type",pkg.kind,"allowed",allowed,why)
           if size not in OWN_SLOTS or not allowed or pkg.kind!="optimist":
               raise SystemExit("BLOCKED: this firmware requires download mode; not safe for the web flasher")
           PY

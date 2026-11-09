@@ -9,6 +9,8 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+  pages: write
+  id-token: write
 jobs:
   firmware:
     runs-on: ubuntu-latest
@@ -83,6 +85,10 @@ jobs:
           path: smc-flasher-site/
           if-no-files-found: error
           retention-days: 7
+      - name: Upload site for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: smc-flasher-site/
       - name: Save build log even on failure
         if: always()
         uses: actions/upload-artifact@v4
@@ -97,3 +103,14 @@ jobs:
           path: optimist/dist/
           if-no-files-found: error
           retention-days: 7
+
+  deploy:
+    needs: firmware
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy independent SMC flasher
+        id: deployment
+        uses: actions/deploy-pages@v4

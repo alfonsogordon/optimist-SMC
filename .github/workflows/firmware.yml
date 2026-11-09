@@ -45,7 +45,27 @@ jobs:
         working-directory: optimist
         run: |
           set -o pipefail
-          python tools/optimist.py package --profile mots-config --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
+          python tools/optimist.py package --profile mots-config --set LAYOUT=8 --set BLE_CENTRAL=1 --set ENG_PLAITS=0 --set ENG_STRINGS=0 --set ENG_PHYS=0 --set ENG_CS80=0 --set ENG_PROPHET=0 --out dist --summary dist/summary.json 2>&1 | tee ../firmware-build.log
+      - name: Reject packages the running FM1 cannot browser-flash
+        working-directory: optimist
+        run: |
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,"tools")
+          from fm1_install import logical_image, flash_size
+          from fm1_route import package_kind, loader_takes, OWN_SLOTS
+          packages=list(Path("dist").glob("*.fwsc"))
+          if len(packages)!=1: raise SystemExit("Expected exactly one package")
+          p=packages[0]
+          raw=p.read_bytes()
+          size=flash_size(logical_image(raw))
+          pkg=package_kind(raw,size)
+          allowed,why=loader_takes("optimist",pkg,"FM-1_722")
+          print("Package",p.name,"flash size",hex(size),"type",pkg.kind,"allowed",allowed,why)
+          if size not in OWN_SLOTS or not allowed or pkg.kind!="optimist":
+              raise SystemExit("BLOCKED: this firmware requires download mode; not safe for the web flasher")
+          PY
       - name: Verify package and simulate installer paths
         working-directory: optimist
         run: |

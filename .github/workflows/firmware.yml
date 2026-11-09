@@ -64,6 +64,25 @@ jobs:
           (out/"smc-test-manifest.json").write_text(json.dumps(manifest,indent=2)+"\n")
           print(json.dumps(manifest,indent=2))
           PY
+      - name: Build separate SMC test web flasher
+        working-directory: optimist
+        run: |
+          cat > web/smc-test-flavour.json <<'JSON'
+          {"flavours":[{"id":"smc-ble-test","title":"SMC-Mixer Bluetooth connection test","description":"Experimental BLE discovery/connection only. No SMC fader or transport control. Three optional sound engines disabled. Back up Skiff first.","profile":"mots-config","file":"dist/*.fwsc"}]}
+          JSON
+          python web/make_site.py --flavours web/smc-test-flavour.json 0.1 ../smc-flasher-site
+          python - <<'PY'
+          from pathlib import Path
+          p=Path("../smc-flasher-site/index.html")
+          p.write_text("""<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>FM1 SMC Bluetooth Test Flasher</title><style>body{background:#10141a;color:#e6eaf0;font:16px system-ui;max-width:680px;margin:8vh auto;padding:24px}a{color:#7dcaff}.card{border:1px solid #394450;border-radius:16px;padding:25px}h1{font-size:26px}.warn{color:#ffca85}a.go{display:inline-block;background:#b8e2ff;color:#10141a;padding:12px 18px;border-radius:9px;text-decoration:none;font-weight:700}</style><div class="card"><h1>FM1 / SMC-Mixer Bluetooth test</h1><p>Separate experimental installer with the exact test firmware included. No file download or upload needed.</p><p class="warn">Back up your Skiff projects before flashing. This build is not yet hardware validated and does not control SMC faders.</p><p>Only use Chrome or Edge with a USB data cable. Read the installer's compatibility warning before proceeding. Never force a bootloader change.</p><p><a class="go" href="webapp/installer/">Open Bluetooth test installer</a></p><p><a href="firmware/">Firmware files</a> &middot; <a href="https://github.com/alfonsogordon/optimist-SMC/blob/dev/smc-integration/SMC-TEST-SAFETY.md">Safety checklist</a></p></div></html>""")
+          PY
+      - name: Upload standalone flasher site
+        uses: actions/upload-artifact@v4
+        with:
+          name: smc-bluetooth-web-flasher-site
+          path: smc-flasher-site/
+          if-no-files-found: error
+          retention-days: 7
       - name: Save build log even on failure
         if: always()
         uses: actions/upload-artifact@v4

@@ -58,7 +58,7 @@ route = """#include "smc_route.h"
 #endif
 static int smc_command_try(uint32_t source, uint32_t st, uint32_t ch, uint32_t d1, uint32_t d2)
 {
-    struct smc_command c = smc_route(1, SMC_LINK_IDENTIFIED && source == 3u,
+    struct smc_command c = smc_route(1, SMC_LINK_IDENTIFIED && source == MSRC_BLE,
                                       (uint8_t)(st | ch), (uint8_t)d1, (uint8_t)d2);
     if (c.action == SMC_ACT_PLAY) {
         if (!song.playing) transport_req = 1;
@@ -75,7 +75,7 @@ marker = "static void events_block_(uint32_t n);"
 if q.count(marker) != 1:
     raise SystemExit("upstream events_block declaration changed; refusing patch")
 q = q.replace(marker, route + "\n" + marker)
-q = q.replace(call, """if (!smc_command_try(midi_in_src[mi_r == 0 ? MQ - 1 : (mi_r - 1) % MQ],
+q = q.replace(call, """if (!smc_command_try(midi_in_src[(mi_r - 1u) % MQ],
                              st, ch, d1, d2))
             FAST_CALL(seqev, midi_event)(st, ch, d1, d2);""")
 seq.write_text(q)
